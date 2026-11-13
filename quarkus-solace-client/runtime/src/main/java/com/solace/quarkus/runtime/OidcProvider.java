@@ -5,7 +5,6 @@ import static com.solace.messaging.config.SolaceProperties.AuthenticationPropert
 import java.time.Duration;
 import java.util.Optional;
 
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -20,7 +19,9 @@ import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 
-@ApplicationScoped
+/**
+ * Registered as a bean only when the {@code quarkus-oidc-client} extension is present.
+ */
 public class OidcProvider {
     @ConfigProperty(name = "quarkus.solace.oidc.refresh.interval", defaultValue = "60s")
     Duration duration;

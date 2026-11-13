@@ -28,6 +28,8 @@ public class SolaceRecorder {
     private JCSMPSession service;
     private static final TypeLiteral<Instance<MessagingServiceClientCustomizer>> CUSTOMIZER = new TypeLiteral<>() {
     };
+    private static final TypeLiteral<Instance<OidcProvider>> OIDC_PROVIDER = new TypeLiteral<>() {
+    };
 
     public Function<SyntheticCreationalContext<JCSMPSession>, JCSMPSession> init(ShutdownContext shutdown) {
         SolaceConfig config = runtimeConfig.getValue();
@@ -44,9 +46,11 @@ public class SolaceRecorder {
                 properties.setProperty(JCSMPProperties.VPN_NAME, config.vpn());
 
                 Instance<MessagingServiceClientCustomizer> reference = context.getInjectedReference(CUSTOMIZER);
-                OidcProvider oidcProvider = context.getInjectedReference(OidcProvider.class);
 
                 String authScheme = (String) properties.getProperty(JCSMPProperties.AUTHENTICATION_SCHEME);
+                OidcProvider oidcProvider = "AUTHENTICATION_SCHEME_OAUTH2".equals(authScheme)
+                        ? oidcProvider(context.getInjectedReference(OIDC_PROVIDER))
+                        : null;
 
                 if (oidcProvider != null && "AUTHENTICATION_SCHEME_OAUTH2".equals(authScheme)) {
                     properties.setProperty(JCSMPProperties.OAUTH2_ACCESS_TOKEN,
@@ -110,6 +114,14 @@ public class SolaceRecorder {
             props.put("jcsmp." + solaceKey, value);
         }
         return props;
+    }
+
+    private static OidcProvider oidcProvider(Instance<OidcProvider> provider) {
+        if (provider.isUnsatisfied()) {
+            throw new IllegalStateException(
+                    "AUTHENTICATION_SCHEME_OAUTH2 requires the quarkus-oidc-client extension; add io.quarkus:quarkus-oidc-client to your dependencies");
+        }
+        return provider.get();
     }
 
 }

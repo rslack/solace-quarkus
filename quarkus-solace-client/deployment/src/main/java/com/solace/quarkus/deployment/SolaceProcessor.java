@@ -6,6 +6,7 @@ import java.util.function.Function;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 
+import org.eclipse.microprofile.config.ConfigProvider;
 import org.jboss.jandex.*;
 
 import com.solace.messaging.MessagingService;
@@ -17,6 +18,8 @@ import com.solacesystems.jcsmp.JCSMPFactory;
 
 import io.quarkus.arc.SyntheticCreationalContext;
 import io.quarkus.arc.deployment.*;
+import io.quarkus.deployment.Capabilities;
+import io.quarkus.deployment.Capability;
 import io.quarkus.deployment.annotations.*;
 import io.quarkus.deployment.annotations.Record;
 import io.quarkus.deployment.builditem.ExtensionSslNativeSupportBuildItem;
@@ -26,6 +29,7 @@ import io.quarkus.deployment.builditem.ShutdownContextBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
 import io.quarkus.deployment.metrics.MetricsCapabilityBuildItem;
+import io.quarkus.runtime.configuration.ConfigurationException;
 import io.quarkus.runtime.metrics.MetricsFactory;
 import io.quarkus.smallrye.health.deployment.spi.HealthBuildItem;
 
@@ -36,7 +40,9 @@ class SolaceProcessor {
             DotName.createSimple(Instance.class),
             new Type[] { ClassType.create(DotName.createSimple(MessagingServiceClientCustomizer.class.getName())) }, null);
 
-    private static final Type OIDC_PROVIDER = ClassType.create(DotName.createSimple(OidcProvider.class));
+    private static final ParameterizedType OIDC_PROVIDER_INJECTION_TYPE = ParameterizedType.create(
+            DotName.createSimple(Instance.class),
+            new Type[] { ClassType.create(DotName.createSimple(OidcProvider.class)) }, null);
 
     private static final AnnotationInstance[] EMPTY_ANNOTATIONS = new AnnotationInstance[0];
 
@@ -58,20 +64,34 @@ class SolaceProcessor {
     @BuildStep
     @Record(ExecutionTime.RUNTIME_INIT)
     ServiceStartBuildItem init(
-            SolaceRecorder recorder,
+            SolaceRecorder recorder, Capabilities capabilities,
             ShutdownContextBuildItem shutdown, BuildProducer<SyntheticBeanBuildItem> syntheticBeans,
             BuildProducer<AdditionalBeanBuildItem> additionalBeanBuildItemBuildProducer) {
 
+        if (!capabilities.isPresent(Capability.OIDC_CLIENT) && ConfigProvider.getConfig()
+                .getOptionalValue("quarkus.solace.authentication.scheme", String.class)
+                .filter("AUTHENTICATION_SCHEME_OAUTH2"::equals).isPresent()) {
+            throw new ConfigurationException(
+                    "quarkus.solace.authentication.scheme=AUTHENTICATION_SCHEME_OAUTH2 requires the quarkus-oidc-client extension; "
+                            + "add io.quarkus:quarkus-oidc-client to your dependencies");
+        }
+
         Function<SyntheticCreationalContext<MessagingService>, MessagingService> function = recorder.init(shutdown);
 
-        additionalBeanBuildItemBuildProducer.produce(AdditionalBeanBuildItem.unremovableOf(OidcProvider.class));
+        if (capabilities.isPresent(Capability.OIDC_CLIENT)) {
+            additionalBeanBuildItemBuildProducer.produce(AdditionalBeanBuildItem.builder()
+                    .addBeanClass(OidcProvider.class)
+                    .setDefaultScope(DotName.createSimple(ApplicationScoped.class))
+                    .setUnremovable()
+                    .build());
+        }
 
         SyntheticBeanBuildItem.ExtendedBeanConfigurator solaceConfigurator = SyntheticBeanBuildItem
                 .configure(MessagingService.class)
                 .defaultBean()
                 .scope(ApplicationScoped.class)
                 .addInjectionPoint(SOLACE_CUSTOMIZER_INJECTION_TYPE, EMPTY_ANNOTATIONS)
-                .addInjectionPoint(OIDC_PROVIDER)
+                .addInjectionPoint(OIDC_PROVIDER_INJECTION_TYPE, EMPTY_ANNOTATIONS)
                 .createWith(function)
                 .unremovable()
                 .setRuntimeInit();

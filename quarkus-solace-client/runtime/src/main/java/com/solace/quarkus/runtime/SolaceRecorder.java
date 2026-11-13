@@ -32,6 +32,8 @@ public class SolaceRecorder {
 
     private static final TypeLiteral<Instance<MessagingServiceClientCustomizer>> CUSTOMIZER = new TypeLiteral<>() {
     };
+    private static final TypeLiteral<Instance<OidcProvider>> OIDC_PROVIDER = new TypeLiteral<>() {
+    };
 
     public Function<SyntheticCreationalContext<MessagingService>, MessagingService> init(ShutdownContext shutdown) {
         SolaceConfig config = runtimeConfig.getValue();
@@ -49,9 +51,11 @@ public class SolaceRecorder {
                 }
 
                 Instance<MessagingServiceClientCustomizer> reference = context.getInjectedReference(CUSTOMIZER);
-                OidcProvider oidcProvider = context.getInjectedReference(OidcProvider.class);
 
                 String authScheme = (String) properties.get(SolaceProperties.AuthenticationProperties.SCHEME);
+                OidcProvider oidcProvider = "AUTHENTICATION_SCHEME_OAUTH2".equals(authScheme)
+                        ? oidcProvider(context.getInjectedReference(OIDC_PROVIDER))
+                        : null;
 
                 if (oidcProvider != null && "AUTHENTICATION_SCHEME_OAUTH2".equals(authScheme)) {
                     properties.put(SolaceProperties.AuthenticationProperties.SCHEME_OAUTH2_ACCESS_TOKEN,
@@ -92,6 +96,14 @@ public class SolaceRecorder {
                 return service.connect();
             }
         };
+    }
+
+    private static OidcProvider oidcProvider(Instance<OidcProvider> provider) {
+        if (provider.isUnsatisfied()) {
+            throw new IllegalStateException(
+                    "AUTHENTICATION_SCHEME_OAUTH2 requires the quarkus-oidc-client extension; add io.quarkus:quarkus-oidc-client to your dependencies");
+        }
+        return provider.get();
     }
 
 }

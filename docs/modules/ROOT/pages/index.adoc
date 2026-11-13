@@ -211,6 +211,16 @@ quarkus.solace.SSL_KEY_STORE_FORMAT=
 
 The access token is obtained with the https://quarkus.io/guides/security-openid-connect-client-reference[Quarkus OIDC client], configured under `quarkus.oidc-client`.
 
+NOTE: OAuth support requires the `quarkus-oidc-client` extension, which is not included by default. Add it to your project:
+
+[source,xml]
+----
+<dependency>
+    <groupId>io.quarkus</groupId>
+    <artifactId>quarkus-oidc-client</artifactId>
+</dependency>
+----
+
 [source,yaml]
 ----
 quarkus.solace.host=tcp://localhost:55555
