@@ -208,6 +208,9 @@ quarkus.solace.SSL_KEY_STORE_FORMAT=
 ----
 
 {empty}5. Connecting to a standalone broker with OAUTH authentication scheme.
+
+The access token is obtained with the https://quarkus.io/guides/security-openid-connect-client-reference[Quarkus OIDC client], configured under `quarkus.oidc-client`.
+
 [source,yaml]
 ----
 quarkus.solace.host=tcp://localhost:55555
