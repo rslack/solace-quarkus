@@ -28,6 +28,11 @@ public class OidcProvider {
     @ConfigProperty(name = "quarkus.solace.oidc.refresh.timeout", defaultValue = "10s")
     Duration refreshTimeout;
 
+    /**
+     * Name of the <a href="https://quarkus.io/guides/security-openid-connect-client-reference">Quarkus OIDC client</a>
+     * that obtains the broker's OAuth2 access token.
+     * Named clients are only needed when identity providers or credentials differ from the default one.
+     */
     @ConfigProperty(name = "quarkus.solace.oidc.client-name")
     Optional<String> oidcClientName;
 

@@ -216,7 +216,7 @@ quarkus.solace.authentication.scheme=AUTHENTICATION_SCHEME_OAUTH2
 quarkus.solace.oidc.refresh.interval=50s // Refresh interval should be less than access token expiry time. Otherwise extension will fail to update access token in solace session.
 quarkus.solace.oidc.refresh.timeout=10s // Token Refresh API timeout. Default is set to 10 seconds.
 
-quarkus.oidc-client.auth-server-url=http://localhost:7777/auth/realms/master
+quarkus.oidc-client.auth-server-url=<auth-server-url> // Base URL of your OIDC provider, e.g. https://keycloak.example.com/realms/solace
 quarkus.oidc-client.client-id=<client-id>
 quarkus.oidc-client.credentials.secret=<client-secret>
 # 'client' is a shortcut for `client_credentials`
@@ -233,29 +233,12 @@ quarkus.solace.AUTHENTICATION_SCHEME=AUTHENTICATION_SCHEME_OAUTH2
 quarkus.solace.oidc.refresh.interval=50s // Refresh interval should be less than access token expiry time. Otherwise extension will fail to update access token in solace session.
 quarkus.solace.oidc.refresh.timeout=10s // Token Refresh API timeout. Default is set to 10 seconds.
 
-quarkus.oidc-client.auth-server-url=http://localhost:7777/auth/realms/master
+quarkus.oidc-client.auth-server-url=<auth-server-url> // Base URL of your OIDC provider, e.g. https://keycloak.example.com/realms/solace
 quarkus.oidc-client.client-id=<client-id>
 quarkus.oidc-client.credentials.secret=<client-secret>
 # 'client' is a shortcut for `client_credentials`
 quarkus.oidc-client.grant.type=client
 ----
-
-These examples configure the default OIDC client, which the extension uses unless `quarkus.solace.oidc.client-name` is set.
-Configuring the default client's `auth-server-url` also stops Quarkus from starting a Keycloak container through Dev Services in dev and test mode.
-
-If your application already uses the default OIDC client for something else, configure a named client for Solace and point the extension at it:
-
-[source,yaml]
-----
-quarkus.solace.oidc.client-name=solace
-quarkus.oidc-client.solace.auth-server-url=http://localhost:7777/auth/realms/master
-quarkus.oidc-client.solace.client-id=<client-id>
-quarkus.oidc-client.solace.credentials.secret=<client-secret>
-quarkus.oidc-client.solace.grant.type=client
-----
-
-Dev Services for Keycloak only check the default client's configuration, so with only a named client they start an unused Keycloak container in dev and test mode.
-Set `quarkus.keycloak.devservices.enabled=false` to prevent this.
 
 {empty}6. Connecting to a standalone broker with TLS and OAUTH authentication scheme.
 [source,yaml]
@@ -269,13 +252,13 @@ quarkus.solace.tls.trust-store-password=
 quarkus.solace.oidc.refresh.interval=50s // Refresh interval should be less than access token expiry time. Otherwise extension will fail to update access token in solace session.
 quarkus.solace.oidc.refresh.timeout=10s // Token Refresh API timeout. Default is set to 10 seconds.
 
-quarkus.oidc-client.auth-server-url=http://localhost:7777/auth/realms/master
+quarkus.oidc-client.auth-server-url=<auth-server-url> // Base URL of your OIDC provider, e.g. https://keycloak.example.com/realms/solace
 quarkus.oidc-client.client-id=<client-id>
 quarkus.oidc-client.credentials.secret=<client-secret>
 # 'client' is a shortcut for `client_credentials`
 quarkus.oidc-client.grant.type=client
 quarkus.oidc-client.tls.trust-store-file=<path-to-truststore-file>
-quarkus.oidc-client.tls.key-store-password=
+quarkus.oidc-client.tls.trust-store-password=<truststore-password>
 quarkus.oidc-client.tls.verification=<enable-or-disable-tls-verification>
 ----
 
@@ -292,13 +275,13 @@ quarkus.solace.SSL_TRUST_STORE_PASSWORD=
 quarkus.solace.oidc.refresh.interval=50s // Refresh interval should be less than access token expiry time. Otherwise extension will fail to update access token in solace session.
 quarkus.solace.oidc.refresh.timeout=10s // Token Refresh API timeout. Default is set to 10 seconds.
 
-quarkus.oidc-client.auth-server-url=http://localhost:7777/auth/realms/master
+quarkus.oidc-client.auth-server-url=<auth-server-url> // Base URL of your OIDC provider, e.g. https://keycloak.example.com/realms/solace
 quarkus.oidc-client.client-id=<client-id>
 quarkus.oidc-client.credentials.secret=<client-secret>
 # 'client' is a shortcut for `client_credentials`
 quarkus.oidc-client.grant.type=client
 quarkus.oidc-client.tls.trust-store-file=<path-to-truststore-file>
-quarkus.oidc-client.tls.key-store-password=
+quarkus.oidc-client.tls.trust-store-password=<truststore-password>
 quarkus.oidc-client.tls.verification=<enable-or-disable-tls-verification>
 ----
 
